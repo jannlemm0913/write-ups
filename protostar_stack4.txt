@@ -1,0 +1,9 @@
+72 A + eip ? 
+eip : extended instruction pointer
+0x080483f4 value
+
+0xbffffcbc location
+
+set {int}0xbffffcbc=0x080483f4
+
+success

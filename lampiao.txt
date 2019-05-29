@@ -1,0 +1,58 @@
+Lampiao WriteUp
+
+Recon:
+	arp-scan 192.168.56.0/24
+	  -> 192.168.56.102
+	nmap -sV 192.168.56.102
+	  22/tcp open  ssh     OpenSSH 6.6.1p1 Ubuntu 2ubuntu2.7 (Ubuntu Linux; protocol 2.0)
+	  80/tcp open  http?   unrecognized service
+	nmap -v -p- 192.168.56.102
+	  22/tcp   open  ssh
+	  80/tcp   open  http
+	  1898/tcp open  cymtec-port
+
+
+Website:
+	It's easy, fi duma egua! (portuguese, s.o.b.)
+	ASCII Zeichnung, keine weiteren Hinweise...
+
+1898:
+	cymtec: tcp, udp, Cymtec secure management (CMS?)
+	mit browser drauf verbinden...
+	kleine Seite mit Artikeln, powered by drupal, login
+	
+	Nikto: robots.txt kann gefunden werden
+	  ...	# Directories
+		Disallow: /includes/
+		Disallow: /misc/
+		Disallow: /modules/
+		Disallow: /profiles/
+		Disallow: /scripts/
+		Disallow: /themes/
+		# Files
+		Disallow: /CHANGELOG.txt
+		Disallow: /cron.php
+		Disallow: /INSTALL.mysql.txt
+		Disallow: /INSTALL.pgsql.txt
+		Disallow: /INSTALL.sqlite.txt
+		Disallow: /install.php
+		Disallow: /INSTALL.txt
+		Disallow: /LICENSE.txt
+		Disallow: /MAINTAINERS.txt
+		Disallow: /update.php
+		Disallow: /UPGRADE.txt
+		Disallow: /xmlrpc.php
+		# Paths (clean URLs)
+		Disallow: /admin/
+		Disallow: /comment/reply/
+		Disallow: /filter/tips/
+		Disallow: /node/add/
+		Disallow: /search/
+		Disallow: /user/register/
+		Disallow: /user/password/
+		Disallow: /user/login/
+		...
+	
+	CHANGELOG.txt zeigt Drupal 7.54 als Version
+
+	

